@@ -1,7 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Stock.Consumer.Services
+namespace Stock.Business
 {
     public interface IStockService
     {

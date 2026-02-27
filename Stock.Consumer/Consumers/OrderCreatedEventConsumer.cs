@@ -1,8 +1,7 @@
 using ECommerce.Shared.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Stock.Consumer.Services;
+using Stock.Business;
 
 namespace Stock.Consumer.Consumers
 {
@@ -21,7 +20,7 @@ namespace Stock.Consumer.Consumers
         {
             var message = context.Message;
 
-            if (message.Products == null || message.Products.Count == 0)
+            if (message.Products is not { Count: > 0 })
                 return;
 
             foreach (var item in message.Products)
@@ -30,16 +29,15 @@ namespace Stock.Consumer.Consumers
                 {
                     await _stockService.DeductStockAsync(item.ProductId, item.Quantity, context.CancellationToken);
                     _logger.LogInformation(
-                        "Stok düşüldü - ProductId: {ProductId}, Düşülen miktar: {Quantity}, CorrelationId: {CorrelationId}",
-                        item.ProductId, item.Quantity, context.CorrelationId);
+                        "Stok düşüldü - OrderId: {OrderId}, ProductId: {ProductId}, Miktar: {Quantity}",
+                        message.OrderId, item.ProductId, item.Quantity);
                 }
                 catch (InvalidOperationException ex)
                 {
                     _logger.LogWarning(
                         ex,
-                        "Stok düşümü başarısız - ProductId: {ProductId}, CorrelationId: {CorrelationId}",
-                        item.ProductId,
-                        context.CorrelationId);
+                        "Stok düşümü başarısız - OrderId: {OrderId}, ProductId: {ProductId}, CorrelationId: {CorrelationId}",
+                        message.OrderId, item.ProductId, context.CorrelationId);
                     throw;
                 }
             }

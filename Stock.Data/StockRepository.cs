@@ -18,40 +18,17 @@ namespace Stock.Data
                 .FirstOrDefaultAsync(s => s.ProductId == productId, cancellationToken);
         }
 
-        public async Task DeductStockAsync(int productId, int quantity, CancellationToken cancellationToken = default)
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var stock = await GetByProductIdAsync(productId, cancellationToken);
-            if (stock == null)
-                throw new InvalidOperationException($"Ürün stok kaydı bulunamadı: ProductId={productId}");
-
-            if (stock.Quantity < quantity)
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
                 throw new InvalidOperationException(
-                    $"Yetersiz stok. ProductId={productId}, Mevcut={stock.Quantity}, İstenen={quantity}");
-
-            stock.Quantity -= quantity;
-            stock.LastUpdated = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-
-        public async Task AddOrUpdateStockAsync(int productId, int quantity, CancellationToken cancellationToken = default)
-        {
-            var stock = await GetByProductIdAsync(productId, cancellationToken);
-            if (stock == null)
-            {
-                _context.ProductStocks.Add(new ProductStock
-                {
-                    ProductId = productId,
-                    Quantity = quantity,
-                    LastUpdated = DateTime.UtcNow
-                });
+                    "Stok güncellemesi sırasında eş zamanlı bir değişiklik algılandı. İşlem tekrar denenecek.", ex);
             }
-            else
-            {
-                stock.Quantity += quantity;
-                stock.LastUpdated = DateTime.UtcNow;
-            }
-            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -4,7 +4,7 @@ using Serilog;
 using Serilog.Sinks.Elasticsearch;
 using StackExchange.Redis;
 using Stock.Consumer.Consumers;
-using Stock.Consumer.Services;
+using Stock.Business;
 using Stock.Data;
 using Stock.Entity;
 
